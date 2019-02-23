@@ -1,41 +1,38 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const app = require('express')()
+const bodyParser = require('body-parser')
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+app.use(bodyParser.json())
 
-var app = express();
+const onInboundCall = (request, response) => {
+  const ncco = [
+    {
+      action: 'talk',
+      text: 'Please enter a digit'
+    },
+    {
+      action: 'input',
+      eventUrl: [`${request.protocol}://${request.get('host')}/webhooks/dtmf`]
+    }
+  ]
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+  response.json(ncco)
+}
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+const onInput = (request, response) => {
+  const dtmf = request.body.dtmf
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+  const ncco = [{
+    action: 'talk',
+    text: `You pressed ${dtmf}`
+  }]
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+  response.json(ncco)
+}
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+app
+  .get('/webhooks/answer', onInboundCall)
+  .post('/webhooks/dtmf', onInput)
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+app.listen(3000)
 
 module.exports = app;
