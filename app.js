@@ -39,7 +39,7 @@ const onInput = (request, response) => {
     action: 'talk',
     text: `You pressed ${dtmf}`
   }]
-
+console.log(ncco);
   response.json(ncco)
 }
 
